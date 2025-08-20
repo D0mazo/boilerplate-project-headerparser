@@ -1,30 +1,45 @@
 // index.js
 // where your node app starts
 
-// init project
 require('dotenv').config();
-var express = require('express');
-var app = express();
+const express = require('express');
+const cors = require('cors');
 
-// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC
-var cors = require('cors');
-app.use(cors({ optionsSuccessStatus: 200 })); // some legacy browsers choke on 204
+const app = express();
 
-// http://expressjs.com/en/starter/static-files.html
+// If running behind a reverse proxy (Glitch, Replit, Render, etc.) use the
+// left-most X-Forwarded-For IP as the client IP.
+app.set('trust proxy', true);
+
+// enable CORS so FCC can test your API
+app.use(cors({ optionsSuccessStatus: 200 }));
+
+// serve static files
 app.use(express.static('public'));
 
-// http://expressjs.com/en/starter/basic-routing.html
-app.get('/', function (req, res) {
+// root
+app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html');
 });
 
-// your first API endpoint...
-app.get('/api/hello', function (req, res) {
+// sample endpoint kept for reference
+app.get('/api/hello', (req, res) => {
   res.json({ greeting: 'hello API' });
 });
 
-// listen for requests :)
-var listener = app.listen(process.env.PORT || 3000, function () {
+// Required endpoint: Request Header Parser
+app.get('/api/whoami', (req, res) => {
+  // Try X-Forwarded-For first, fall back to req.ip
+  const fwdFor = req.headers['x-forwarded-for'];
+  const ipaddress = (fwdFor ? fwdFor.split(',')[0].trim() : req.ip) || '';
+
+  const language = req.headers['accept-language'] || '';
+  const software = req.headers['user-agent'] || '';
+
+  res.json({ ipaddress, language, software });
+});
+
+// listen
+const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port);
 });
